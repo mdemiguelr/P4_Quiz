@@ -150,14 +150,14 @@ exports.testCmd = (rl,id) =>
         )
             {
                 log('Su respuesta es :');
-                biglog('Correcto', 'green');
+                log('Correcto', 'green');
                 rl.prompt();
 
             }
         else
             {
                 log('Su respuesta es :');
-                    biglog('Incorrecto', 'red');
+                log('Incorrecto', 'red');
                     rl.prompt();
                 }
             })
