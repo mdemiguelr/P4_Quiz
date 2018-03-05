@@ -175,49 +175,50 @@ exports.testCmd = (rl,id) =>
 *
 * @param rl Objeto readLine usado para implementar el CLI.
 */
-exports.playCmd = rl =>{
+exports.playCmd = rl => {
 
     let score =0;
     let toBeResolved = []; //guardar id de todas las preguntas que existen
     for(let j =0;j<model.count();j++){
         toBeResolved[j]=model.getByIndex(j);
     }
-    const playOne = () =>
-    {
-        if (toBeResolved.length == 0) {
+    const playOne = () => {
+
+        if (toBeResolved.length === 0) {
             log('FIN DEL JUEGO', 'blue');
             log('Aciertos: ');
             biglog(score, 'magenta');
+            score=0;
             rl.prompt();
 
-        }
-        else {
-            let id = Math.floor(Math.random()*toBeResolved.length);
-            toBeResolved.splice(id,1);
-            let quiz = model.getByIndex(id);
+        } else {
 
+            let idRandom = Math.random()*(toBeResolved.length-1);
+            let id = Math.round(idRandom);
+            //let quiz = model.getByIndex(id);
+            rl.question(colorize(toBeResolved[id].question +"?",'red'), answer => {
 
-            rl.question(colorize(quiz.question,'red'), resp => {
+                if(toBeResolved[id].answer.toLowerCase().trim() === answer.toLowerCase().trim()){
 
-                    if(resp.toLowerCase().trim() == quiz.answer.toLowerCase().trim()
-        )
-                    {
-                        log('CORRECTO - Lleva ' + (score+1) + ' aciertos.');
-                    score++;
-                    playOne()
-                        ;}
-                        else
-                    {
-                        log('INCORRECTO .');
-                        log('Fin del juego. Aciertos:' + score);
-                        biglog(score, 'magent');
-                        rl.prompt();
-                    }
-                });
-                }
+                log('CORRECTO - Lleva ' + (score+1) + ' aciertos.');
+                score++;
+                toBeResolved.splice(id,1);
+                playOne();
+
+            } else {
+
+                log('INCORRECTO .');
+                log('Fin del juego. Aciertos:' + score);
+                biglog(score, 'magenta');
+                score=0;
+                rl.prompt();
             }
-playOne();
+        });
+        }
+    };
+    playOne();
 };
+
 
 /**
 * Muestra los nombres de los autores de la práctica.
@@ -226,8 +227,8 @@ playOne();
 */
 exports.creditsCmd = rl =>{
 log('Autores de la práctica');
-log('Marta','green');
-log('Nombre 2','green');
+log('MARTA','green');
+
 rl.prompt();
 } ;
 /**
