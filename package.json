@@ -1,7 +1,7 @@
 {
   "name": "chalk",
   "version": "1.0.0",
-  "description": "Proyecto Quiz",
+  "description": "Práctica Quiz",
   "main": "main.js",
   "scripts": {
     "start": "node main.js",
@@ -16,7 +16,9 @@
   "license": "Unlicense",
   "dependencies": {
     "chalk": "^2.3.2",
-    "figlet": "^1.2.0"
+    "figlet": "^1.2.0",
+    "sequelize": "^4.37.1",
+    "sqlite3": "^3.1.13"
   },
   "devDependencies": {}
 }
