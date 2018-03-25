@@ -103,7 +103,7 @@ exports.showCmd = (rl,id) =>{
  * Entonces la llamada a then que hay que hacer la promesa deuvelta será:
  *      .then(answer => {...})
  *
- *      También colorea en rojo el teto de la pregunta, elimina espacios al principio y
+ *      También colorea en rojo el texto de la pregunta, elimina espacios al principio y
  *
  *      @param rl Objeto readline usado para implementar el CLI.
  *      @param text Pregunta que hay que hacerle al usuario.
@@ -229,38 +229,38 @@ exports.editCmd = (rl,id) =>{
 * @param rl Objeto readLine usado para implementar el CLI.
 * @param id Clave del quiz a probar.
 */
-exports.testCmd = (rl,id) =>
-{
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parametro id`);
-        rl.prompt();
-    } else {
-        try {
-            const quiz = model.getByIndex(id);
-
-            rl.question(colorize(quiz.question, 'red'), resp => {
-
-                if(resp.toLowerCase().trim() === quiz.answer.toLowerCase().trim()
-        )
-            {
-                log('Su respuesta es :');
-                log('Correcto', 'green');
-                rl.prompt();
-
-            }
-        else
-            {
-                log('Su respuesta es :');
-                log('Incorrecto', 'red');
-                    rl.prompt();
-                }
-            })
-    }
-        catch (error) {
-            errorlog(error.message);
-            rl.prompt();
+exports.testCmd = (rl,id) => {
+    validateId(id) //Promesa
+        .then(id => models.quiz.findById(id)) //busco el quiz que tenga el id dado como parámetro
+        .then(quiz => {
+            if(!quiz){
+                throw new Error(`No existe un quiz asociado al id=${id}.`); //si no tiene el quiz id metido, error
         }
-    }
+        return makeQuestion(rl, `${quiz.question}:`)
+    .then(answer =>{
+        if(answer.toLowerCase().trim() == quiz.answer.toLowerCase().trim()){
+                log(`Su respuesta es correcta. `);
+                biglog("Correcta","green");
+                return;
+} else{
+    log(`Su respuesta es incorrecta. `);
+    biglog("Incorrecta","red");
+}
+return quiz;
+    });
+})
+
+.catch(Sequelize.ValidationError, error => {
+    errorlog("El quiz es erróneo:");
+    error.errors.forEach(({message}) => errorlog(message));
+})
+.catch(error => {
+    errorlog(error.message);
+})
+
+.then(() => {
+    rl.prompt();
+});
 };
 
 
@@ -282,55 +282,47 @@ exports.playCmd = rl => {
         { //funcion playOne , sin parámetros
             return Promise.resolve()
                 .then(() => { //Quiero que devuelva el resultado de la promesa MakeQuestion
-                if(toBePlayed.length <= 0
-        )
-            {
-                console.log("FIN");
-                rl.prompt();
-                resolve();
-                return;
-            }
-            let pos = Math.floor(Math.random() * toBePlayed.length); //Math.floor para redondear
-            let quiz = toBePlayed[pos];
-            toBePlayed.splice(pos, 1);
+                if(toBePlayed.length === 0) {
+                    log("No hay nada más que preguntar. ");
+                    log(`Fin del juego. Aciertos: ${score}`);
+                    biglog(`${score}`,"magenta");
+                    rl.prompt();
+                    return;
+        }
+        let pos = Math.floor(Math.random()*toBePlayed.length);
+                let quiz = toBePlayed[pos];
+                toBePlayed.splice(pos,1);
+                makeQuestion(rl,`${quiz.question}: `)
+                    .then(answer => {
+                        if(answer.toLowerCase().trim() == quiz.answer.toLowerCase().trim()){
+                            score++;
+                            log(`CORRECTO -Lleva ${score} aciertos`);
+                            return playOne();
 
-            makeQuestion(rl, quiz.question)
-                .then(answer => {
-                if(answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()
-        )
-            {
-                score++;
-                console.log("Llevas " + score + "aciertos.");
-                resolve(playOne()); //cuando acaba tengo que llamar a resolve o a reject!!!!!
-                return PlayOne();
-            }
-        else
-            {
-                console.log("Error");
-                resolve();
-            }
+        } else {
+                            log("INCORRECTO");
+                            log(`Fin del juego. Aciertos: ${score}`);
+                            biglog(`${score}`,"magenta");
+                            rl.prompt();
+        }
         })
         })
         }
-        models.quiz.findAll({raw: true}) //PROMESA
-            .then(quizzes => { //Hasta que no acabe no pasa al siguiente . then
+        models.quiz.findAll({raw: true})
+            .then(quizzes => {
             toBePlayed = quizzes;
-
+            })
+    .then(() => {
+        return playOne();
     })
-    .
-        then(() => {
-            return playOne(); //quiero que me devuelva una promesa --> para ello modifico en PlayOne() y pongo return ...
-
+    .catch(error => {
+        errorlog(error.message);
     })
-    .catch(e => {
-            console.log("Error: " + e);
-    })
-    .
-        then(() => {
-            console.log(score);
+    .then(() => {
         rl.prompt();
-    })
-    };
+    });
+};
+
 
 
 
